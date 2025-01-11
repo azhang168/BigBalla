@@ -1,15 +1,20 @@
 import logo from './logo.svg';
-import React ,{ useState } from "react";
+import React ,{ useState, useEffect } from "react";
 import './App.css';
 const Header = () =>{
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [dropdownVisible, setDropdownVisible] = useState(false)
   const [showSignupPopup, setShowSignupPopup] = useState(false)
 
-  const [formData, setFormData] = useState ({
+  const [loginInfo, setLoginInfo] = useState ({
     email: '',
     password: '',
   });
+  useEffect(() => {
+    const email = loginInfo.email;
+    const password = loginInfo.password;
+    alert(`email: '${email}' password: '${password}'`);
+  }, [loginInfo]);
 
   const toggleDropdown = () => {
     setDropdownVisible((prev)=>!prev);
@@ -18,8 +23,17 @@ const Header = () =>{
     setShowSignupPopup(true);
     setDropdownVisible(false);
   };
-  const handleSignupSubmit = () => {
-    alert(`email: '${formData.email}' password: '${formData.password}'`);
+  const handleSignupSubmit = (event) => {
+    event.preventDefault(); // Prevent the default form submission
+    const formData = new FormData(event.target);
+    const email = formData.get("email");
+    const password = formData.get("password");
+    console.log(`email: ${email}, password: ${password}`);
+    alert(`email: '${email}' password: '${password}'`);
+    setLoginInfo({
+      email: email,
+      password: password
+    })
     closeSignupPopup();
   };
   const closeSignupPopup = () => {
@@ -104,6 +118,7 @@ const Header = () =>{
               <input
                 id="email"
                 type="email"
+                name = "email"
                 required
                 style={{
                   width: "100%",
@@ -119,6 +134,7 @@ const Header = () =>{
               <input
                 id="password"
                 type="password"
+                name = "password"
                 required
                 style={{
                   width: "100%",
