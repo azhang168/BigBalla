@@ -16,7 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from recommendations import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/user/', views.UserCreateView.as_view(), name='user-create'),
+    path('api/recommendations/', views.RecommendationsCreateView.as_view(), name='recommendations-create'),
+    path('api/restaurant/', views.RestaurantCreateView.as_view(), name='restaurant-create'),
 ]

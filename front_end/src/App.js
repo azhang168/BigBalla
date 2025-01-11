@@ -1,6 +1,8 @@
 import logo from './logo.svg';
 import React ,{ useState } from "react";
 import './App.css';
+import axios from 'axios'
+
 const Header = () =>{
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [dropdownVisible, setDropdownVisible] = useState(false)
@@ -18,8 +20,13 @@ const Header = () =>{
     setShowSignupPopup(true);
     setDropdownVisible(false);
   };
-  const handleSignupSubmit = () => {
-    alert(`email: '${formData.email}' password: '${formData.password}'`);
+  const handleSignupSubmit = async (e) => {
+    try{
+      e.preventDefault()
+      const response = await axios.post('http://localhost:8000/api/user/', formData);
+    } catch (error){
+      console.error('Error saving user:', error);
+    }
     closeSignupPopup();
   };
   const closeSignupPopup = () => {
