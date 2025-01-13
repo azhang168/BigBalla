@@ -1,7 +1,7 @@
 import logo from './logo.svg';
 import React ,{ useState, useEffect } from "react";
 import './App.css';
-import axios from 'axios'
+import axios from 'axios';
 
 const Header = () =>{
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -28,7 +28,7 @@ const Header = () =>{
   const handleSignupSubmit = async (event) => {
     event.preventDefault(); // Prevent the default form submission
     try{
-      const response = await axios.post('http://localhost:8000/api/user/', formData);
+      const response = await axios.post('http://localhost:8000/api/user/', loginInfo);
     } catch (error){
       console.error('Error saving user:', error);
     }
