@@ -1,51 +1,86 @@
 import logo from './logo.svg';
 import React ,{ useState, useEffect } from "react";
 import './App.css';
-import axios from 'axios';
+import Axios from "axios";
 
 const Header = () =>{
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [dropdownVisible, setDropdownVisible] = useState(false)
   const [showSignupPopup, setShowSignupPopup] = useState(false)
+  const [showLoginPopup, setShowLoginPopup] = useState(false)
 
   const [loginInfo, setLoginInfo] = useState ({
     email: '',
     password: '',
   });
-  useEffect(() => {
-    const email = loginInfo.email;
-    const password = loginInfo.password;
-    alert(`email: '${email}' password: '${password}'`);
-  }, [loginInfo]);
 
   const toggleDropdown = () => {
     setDropdownVisible((prev)=>!prev);
   };
+
   const handleSignup = () => {
     setShowSignupPopup(true);
     setDropdownVisible(false);
   };
-  const handleSignupSubmit = async (event) => {
-    event.preventDefault(); // Prevent the default form submission
-    try{
-      const response = await axios.post('http://localhost:8000/api/user/', loginInfo);
-    } catch (error){
-      console.error('Error saving user:', error);
-    }
-    const formData = new FormData(event.target);
-    const email = formData.get("email");
-    const password = formData.get("password");
-    console.log(`email: ${email}, password: ${password}`);
-    alert(`email: '${email}' password: '${password}'`);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
     setLoginInfo({
-      email: email,
-      password: password
-    })
-    closeSignupPopup();
+      ...loginInfo,
+      [name]: value,
+    });
   };
+
+  const handleSignupSubmit = async (event) => {
+    const email = loginInfo.email;
+    const password = loginInfo.password;
+    closeSignupPopup();
+    event.preventDefault(); // Prevent the default form submission
+    await Axios.post('http://localhost:8000/api/recommendations/signup/', {
+      email,
+      password,
+      email,
+    })
+    .then(res => console.log(res))
+    .catch(error => alert(error))
+    closeSignupPopup();
+    setLoginInfo({
+      email: '',
+      password: '',
+    });
+  };
+
+  const handleLogin = () => {
+    setShowLoginPopup(true)
+    setDropdownVisible(false)
+  }
+
+  const handleLoginSubmit = async (event) => {
+    event.preventDefault();
+    const email = loginInfo.email;
+    const password = loginInfo.password;
+    try {
+      const response = await Axios.post('http://localhost:8000/api/recommendations/login/', {
+        email,
+        password,
+        email
+      });
+      localStorage.setItem('access', response.data.access);
+      localStorage.setItem('refresh', response.data.refresh);
+      setIsLoggedIn(true)
+      closeLoginPopup();
+    } catch (error){
+      alert(error.response.data.error)
+    }
+  };
+
   const closeSignupPopup = () => {
     setShowSignupPopup(false);
   };
+
+  const closeLoginPopup = () => {
+    setShowLoginPopup(false);
+  }
   
   return(
     <header id='mainHeader' height = '50px'>
@@ -73,7 +108,7 @@ const Header = () =>{
         >
         <div>
             <button
-              //onClick={handleLogin}
+              onClick={handleLogin}
               style={{
                 padding: "10px",
                 width: "100%",
@@ -126,6 +161,7 @@ const Header = () =>{
                 id="email"
                 type="email"
                 name = "email"
+                onChange={handleChange}
                 required
                 style={{
                   width: "100%",
@@ -142,6 +178,7 @@ const Header = () =>{
                 id="password"
                 type="password"
                 name = "password"
+                onChange={handleChange}
                 required
                 style={{
                   width: "100%",
@@ -163,11 +200,92 @@ const Header = () =>{
                 cursor: "pointer",
               }}
             >
-              Submit
+              Sign Up
             </button>
             <button
               type="button"
               onClick={closeSignupPopup}
+              style={{
+                marginLeft: "10px",
+                padding: "10px 20px",
+                backgroundColor: "#ccc",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+          </form>
+        </div>
+        )}
+        {showLoginPopup && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: "#fff",
+            border: "1px solid #ccc",
+            borderRadius: "10px",
+            padding: "20px",
+            boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+            zIndex: 2000,
+          }}
+        >
+          <h3>Log In</h3>
+          <form onSubmit={handleLoginSubmit}>
+            <div style={{ marginBottom: "10px", marginRight: "10px" }}>
+              <label>Email:</label>
+              <input
+                id="email"
+                type="email"
+                name = "email"
+                onChange={handleChange}
+                required
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  marginTop: "5px",
+                  borderRadius: "5px",
+                  border: "1px solid #ccc",
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: "10px", marginRight: "10px" }}>
+              <label>Password:</label>
+              <input
+                id="password"
+                type="password"
+                name = "password"
+                onChange={handleChange}
+                required
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  marginTop: "5px",
+                  borderRadius: "5px",
+                  border: "1px solid #ccc",
+                }}
+              />
+            </div>
+            <button
+              type="submit"
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#007bff",
+                color: "#fff",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer",
+              }}
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              onClick={closeLoginPopup}
               style={{
                 marginLeft: "10px",
                 padding: "10px 20px",
