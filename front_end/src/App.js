@@ -309,6 +309,7 @@ const App = () =>{
     const [numPeople, setNumPeople] = useState(0);
     const [budget, setBudget] = useState(0);
     const [rating, setRating] = useState(0);
+    const [hover, setHoverRating] = useState(0);
     function search(formData) {
       const city = formData.get("city");
       const numPeople = formData.get("numPeople");
@@ -317,12 +318,16 @@ const App = () =>{
     }
 
     const handleRatingClick = (rating) => {
-      setRating({
-        rating: rating,
-      });
+      setRating(rating); 
       console.log("Selected Rating:", rating);
     };
+    const handleMouseEnter = (star) => {
+      setHoverRating(star); // Set hoverRating on mouse hover
+    };
     
+    const handleMouseLeave = () => {
+      setHoverRating(0); // Reset hoverRating on mouse leave
+    };
     return(
         <div>
           <Header />
@@ -340,8 +345,10 @@ const App = () =>{
                   <span
                     key={star}
                     onClick={() => handleRatingClick(star)}
+                    onMouseEnter={() => handleMouseEnter(star)} // Highlight stars on hover
+                    onMouseLeave={handleMouseLeave} // Reset hover effect
                     style={{
-                      color: star <= rating ? 'gold' : 'gray',
+                      color: star <= (hover || rating) ? 'gold' : 'gray',
                       fontSize: '24px',
                     }}
                   >
