@@ -115,7 +115,7 @@ class GetRecommendation(APIView):
                 f"Provide the response in JSON format with the following keys: name, location, budget, rating."
             )
             response = openai.ChatCompletion.create(
-                model='gpt-4o-mini'
+                model='gpt-4o-mini',
                 messages=[{"role": "system", "content": "You are a helpful assistant."},
                           {"role": "user", "content": prompt}],
                 response_format="json"
