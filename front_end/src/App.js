@@ -3,16 +3,20 @@ import React ,{ useState, useEffect } from "react";
 import './App.css';
 import Axios from "axios";
 
-const Header = () =>{
+const Profile = () =>{
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [dropdownVisible, setDropdownVisible] = useState(false)
   const [showSignupPopup, setShowSignupPopup] = useState(false)
   const [showLoginPopup, setShowLoginPopup] = useState(false)
+  const [showProfilePopup, setShowProfilePopup] = useState(false)
 
   const [loginInfo, setLoginInfo] = useState ({
     email: '',
     password: '',
   });
+
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
 
   const toggleDropdown = () => {
     setDropdownVisible((prev)=>!prev);
@@ -63,16 +67,55 @@ const Header = () =>{
       const response = await Axios.post('http://localhost:8000/api/recommendations/login/', {
         email,
         password,
-        email
       });
-      localStorage.setItem('access', response.data.access);
-      localStorage.setItem('refresh', response.data.refresh);
+      localStorage.setItem('access_token', response.data.access);
+      localStorage.setItem('refresh_token', response.data.refresh);
+      //setFirstName(response.data.get('first_name'))
+      //setLastName(response.date.get('last_name'))
       setIsLoggedIn(true)
       closeLoginPopup();
     } catch (error){
       alert(error.response.data.error)
     }
   };
+
+  const handleLogout = async (event) => {
+    event.preventDefault();
+    await Axios.post('http://localhost:8000/api/recommendations/logout/', {
+      refresh_token: localStorage.getItem('refresh_token')
+    })
+    .then(response => console.log(response.data.message))
+    .catch(error => console.log(error))
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    setIsLoggedIn(false)
+    setLoginInfo({
+      email: '',
+      password: '',
+    });
+  }
+
+  const handleEditProfile = () => {
+    setShowProfilePopup(true);
+  }
+
+  const handleEditProfileSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("access_token")
+    if (!token) {
+      alert("You must be logged in first")
+      return
+    }
+    const response = await Axios.post('http://localhost:8000/api/recommendations/edit-profile/', {
+      first_name: firstName,
+      last_name: lastName,
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(response => console.log(response.data.message))
+    .catch(error => console.log(error))
+    setShowProfilePopup(false)
+  }
 
   const closeSignupPopup = () => {
     setShowSignupPopup(false);
@@ -81,10 +124,41 @@ const Header = () =>{
   const closeLoginPopup = () => {
     setShowLoginPopup(false);
   }
+
+  const handleMyRecommendations = async (e) => {
+    e.preventDefault();
+    
+    const token = localStorage.getItem('access_token')
+    if (!token) {
+      alert("You need to be logged in first!");
+      return;
+    }
+    await Axios.get('http://localhost:8000/api/recommendations/my-recommendations/', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(response => console.log(response.data.message))
+    .catch(error => console.log(error))
+    setDropdownVisible(false);
+  }
+
+  const uploadProfilePhoto = async (file) => {
+    const formData = new FormData();
+    formData.append("profile_picture", file);
+    const token = localStorage.getItem("access_token");
+    await Axios.post("http://localhost:8000/media/profile_pics/", formData, {
+      headers:{
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(reponse => console.log(reponse.data))
+    .catch(error => console.log(error))
+  }
   
   return(
     <header id='mainHeader' height = '50px'>
-      <img 
+      {isLoggedIn ? (
+        <img 
         id = "profilePic" src = 
         "/DefaultProfilePicture.png" 
         height = "auto" 
@@ -92,6 +166,16 @@ const Header = () =>{
         onClick={toggleDropdown}
         style={{cursor: "pointer"}}
       />
+      ) : (
+        <img 
+        id = "profilePic" src = 
+        "/DefaultProfilePicture.png" 
+        height = "auto" 
+        width = "80px" 
+        onClick={toggleDropdown}
+        style={{cursor: "pointer"}}
+      />
+      )}
       {dropdownVisible && (
         <div
         style={{
@@ -106,9 +190,10 @@ const Header = () =>{
           width: "150px",
         }}
         >
-        <div>
-            <button
-              onClick={handleLogin}
+          {isLoggedIn ? (
+            <div>
+              <button
+              onClick={handleEditProfile}
               style={{
                 padding: "10px",
                 width: "100%",
@@ -119,10 +204,10 @@ const Header = () =>{
                 fontSize: "14px",
               }}
             >
-              Login
+              Edit Profile
             </button>
-            <button
-              onClick={handleSignup}
+              <button
+              onClick={handleMyRecommendations}
               style={{
                 padding: "10px",
                 width: "100%",
@@ -132,10 +217,56 @@ const Header = () =>{
                 cursor: "pointer",
                 fontSize: "14px",
               }}
-              >
-                Sign Up
-              </button>
+            >
+              My Recommendations
+            </button>
+            <button
+            onClick={handleLogout}
+            style={{
+              padding: "10px",
+              width: "100%",
+              background: "none",
+              border: "none",
+              textAlign: "left",
+              cursor: "pointer",
+              fontSize: "14px",
+            }}
+          >
+            Logout
+          </button>
           </div>
+          ) : (       
+          <div>
+              <button
+                onClick={handleLogin}
+                style={{
+                  padding: "10px",
+                  width: "100%",
+                  background: "none",
+                  border: "none",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                Login
+              </button>
+              <button
+                onClick={handleSignup}
+                style={{
+                  padding: "10px",
+                  width: "100%",
+                  background: "none",
+                  border: "none",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+                >
+                  Sign Up
+                </button>
+            </div>
+          )}
         </div>
       )}
       {showSignupPopup && (
@@ -300,6 +431,95 @@ const Header = () =>{
           </form>
         </div>
         )}
+        {showProfilePopup && (
+          <div
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              backgroundColor: "#fff",
+              border: "1px solid #ccc",
+              borderRadius: "10px",
+              padding: "20px",
+              boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+              zIndex: 2000,
+            }}
+          >
+            <h3>Edit Profile</h3>
+            <img 
+              id = "profilePic" src = 
+              "/DefaultProfilePicture.png"  
+              style={{
+                width: "100px",
+                height: "100px",
+                borderRadius: "50%",
+                objectFit: "cover",
+                display: "block",
+                margin: "auto",
+              }}
+            />
+            <form onSubmit={handleEditProfileSubmit}>
+              <div style={{ marginBottom: "10px", marginRight: "10px" }}>
+                <label>First Name</label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    marginTop: "5px",
+                    borderRadius: "5px",
+                    border: "1px solid #ccc",
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: "10px", marginRight: "10px" }}>
+                <label>Last Name</label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    marginTop: "5px",
+                    borderRadius: "5px",
+                    border: "1px solid #ccc",
+                  }}
+                />
+              </div>
+                <button
+                type="submit"
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: "#007bff",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                }}
+              >
+                Confirm
+              </button>
+              <button
+              type="button"
+              onClick={() => setShowProfilePopup(false)}
+              style={{
+                marginLeft: "10px",
+                padding: "10px 20px",
+                backgroundColor: "#ccc",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+            </form>
+        </div>
+        )}
     </header>
   )
 }
@@ -310,11 +530,23 @@ const App = () =>{
     const [budget, setBudget] = useState(0);
     const [rating, setRating] = useState(0);
     const [hover, setHoverRating] = useState(0);
-    function search(formData) {
-      const city = formData.get("city");
-      const numPeople = formData.get("numPeople");
-      const budget = formData.get("budget");
+    const [results, setResults] = useState(null);
+
+    
+    const handleSearch = async (e) => {
+      e.preventDefault();
       alert(`city: '${city}' numPeople: '${numPeople}' budget: '${budget}', rating: '${rating}'`);
+      try{
+        const response = await Axios.post('http://localhost:8000/api/recommendations/get-recommendation/', {
+          city,
+          budget,
+          rating,
+          num_people: numPeople
+        });
+        setResults(response.data)
+      } catch (error){
+        console.error(error);
+      }
     }
 
     const handleRatingClick = (rating) => {
@@ -330,15 +562,15 @@ const App = () =>{
     };
     return(
         <div>
-          <Header />
+          <Profile />
           <h1 style={{ textAlign: 'center' }}> FOOD FINDER </h1>
-          <form action={search} id='searchFood'>
+          <form action={handleSearch} id='searchFood'>
               <label style={{ textAlign: 'left' }}>City</label>
-              <input name="city" id="city"/>
+              <input name="city" id="city" onChange = {(e) => setCity(e.target.value)}/>
               <label style={{ textAlign: 'left' }}>Number of People</label>
-              <input type="number" name="numPeople" id="numPeople"/>
+              <input type="number" name="numPeople" id="numPeople" onChange = {(e) => setNumPeople(e.target.value)}/>
               <label style={{ textAlign: 'left' }}>Budget</label>
-              <input type="number" name="budget" id="budget"/>
+              <input type="number" name="budget" id="budget" onChange = {(e) => setBudget(e.target.value)}/>
               <label style={{textAlign: 'left'}}>Rating</label>
               <div style={{ display: 'flex', gap: '5px', cursor: 'pointer' }}>
                 {[1, 2, 3, 4, 5].map((star) => (
