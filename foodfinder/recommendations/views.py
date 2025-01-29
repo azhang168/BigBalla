@@ -4,7 +4,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Recommendations, Restaurant, CustomUser
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth.hashers import check_password, make_password
 from rest_framework.status import HTTP_200_OK, HTTP_401_UNAUTHORIZED
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
@@ -121,6 +120,13 @@ class GetRecommendation(APIView):
                 response_format="json"
             )
             recommendations = json.loads(response["choices"][0]["message"]["content"])
+            for restaurant in recommendations:
+                restaurant = Restaurant.objects.create(
+                    name = restaurant['name'], 
+                    location = restaurant['location'], 
+                    budget = restaurant['budget'],
+                    rating = restaurant['rating']
+                    )
             return JsonResponse(recommendations, safe=False)
 
         except Exception as e:
